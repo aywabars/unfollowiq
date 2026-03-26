@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnfollowIQ â Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:#0a0a0a;border-right:1px solid #1a1a1a;padding:20px}
+.sidebar .logo{font-size:20px;font-weight:800;margin-bottom:32px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar a{display:block;padding:10px 14px;color:#888;font-size:14px;border-radius:8px;margin-bottom:4px;transition:all .15s;text-decoration:none}
+.sidebar a:hover,.sidebar a.active{background:#111;color:#fff}
+.sidebar .user-info{position:absolute;bottom:20px;left:20px;right:20px;padding:12px;background:#111;border-radius:8px;font-size:12px;color:#666}
+.sidebar .user-info .email{color:#aaa;font-weight:500}
+.main{margin-left:220px;padding:32px}
+h1{font-size:28px;font-weight:700;margin-bottom:24px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;padding:20px}
+.stat-card .value{font-size:32px;font-weight:700;margin-bottom:4px}
+.stat-card .label{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.stat-card.red .value{color:#e74c3c}
+.stat-card.green .value{color:#2ecc71}
+.stat-card.blue .value{color:#667eea}
+.stat-card.purple .value{color:#764ba2}
+
+/* Sections */
+.section{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;padding:24px;margin-bottom:24px}
+.section h2{font-size:18px;margin-bottom:16px}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 15px rgba(102,126,234,.3)}
+.btn-danger{background:#e74c3c;color:#fff}
+.btn-stop{background:#e67e22;color:#fff}
+.btn-secondary{background:#222;color:#fff}
+.btn-secondary:hover:not(:disabled){background:#333}
+
+/* Connect form */
+.connect-form{display:grid;gap:12px;max-width:500px}
+.connect-form label{font-size:13px;color:#aaa}
+.connect-form input{padding:10px 14px;background:#111;border:1px solid #333;border-radius:8px;color:#fff;font-size:13px}
+.connect-form input:focus{border-color:#667eea;outline:none}
+.connect-status{display:flex;align-items:center;gap:8px;padding:12px;background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;color:#2ecc71;font-size:14px}
+.connect-status.disconnected{background:#1a0a0a;border-color:#3a1a1a;color:#e74c3c}
+.help-text{font-size:12px;color:#555;margin-top:4px;line-height:1.5}
+
+/* Job progress */
+.progress-bar{height:8px;background:#222;border-radius:4px;overflow:hidden;margin:12px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:4px;transition:width .5s}
+.job-info{display:flex;gap:24px;margin:12px 0;flex-wrap:wrap}
+.job-info .item{font-size:13px;color:#aaa}
+.job-info .item strong{color:#fff}
+
+/* Log */
+.log-area{max-height:250px;overflow-y:auto;background:#050505;border-radius:8px;padding:12px;font-family:'SF Mono',Monaco,monospace;font-size:12px;line-height:1.8}
+.log-area .log-entry{color:#888}
+.log-area .log-entry.success{color:#2ecc71}
+.log-area .log-entry.error{color:#e74c3c}
+.log-area .log-entry.warn{color:#f39c12}
+.log-area .log-entry.info{color:#3498db}
+
+/* Non-followers list */
+.nf-list{max-height:400px;overflow-y:auto}
+.nf-item{display:flex;align-items:center;padding:8px;border-radius:6px;margin-bottom:2px}
+.nf-item:hover{background:#111}
+.nf-item .name{flex:1;font-size:14px}
+.nf-item .name a{color:#e4e4e4;text-decoration:none}
+.nf-item .name a:hover{color:#667eea}
+.nf-item .badge{font-size:11px;padding:3px 8px;border-radius:4px}
+.badge-pending{background:#222;color:#888}
+.badge-unfollowed{background:#0a1a0a;color:#2ecc71}
+.badge-error{background:#1a0a0a;color:#e74c3c}
+.search-input{width:100%;padding:10px 14px;background:#111;border:1px solid #222;border-radius:8px;color:#fff;font-size:13px;margin-bottom:12px}
+.search-input:focus{outline:none;border-color:#667eea}
+
+/* Whitelist */
+.whitelist-input{width:100%;padding:10px 14px;background:#111;border:1px solid #333;border-radius:8px;color:#fff;font-size:13px}
+
+/* Tier selector */
+.tier-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.tier-option{background:#111;border:2px solid #222;border-radius:10px;padding:14px 10px;cursor:pointer;transition:all .2s;text-align:center}
+.tier-option:hover{border-color:#444}
+.tier-option.selected{border-color:#667eea;background:#0d0d1a}
+.tier-option .tier-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.tier-option .tier-desc{font-size:11px;color:#666;line-height:1.4}
+.tier-option .tier-limit{font-size:12px;color:#667eea;margin-top:6px;font-weight:600}
+
+/* Estimate bar */
+.estimate-bar{background:#111;border:1px solid #1a1a1a;border-radius:8px;padding:14px 18px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.estimate-bar .est-item{font-size:13px;color:#aaa}
+.estimate-bar .est-item strong{color:#fff;font-size:15px}
+.btn-explain{background:none;border:1px solid #333;color:#888;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
+.btn-explain:hover{border-color:#667eea;color:#667eea}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#111;border:1px solid #222;border-radius:14px;padding:28px;max-width:480px;width:90%;position:relative}
+.modal h3{font-size:18px;margin-bottom:14px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal p{font-size:13px;color:#aaa;line-height:1.7;margin-bottom:10px}
+.modal .close-modal{position:absolute;top:14px;right:18px;background:none;border:none;color:#666;font-size:20px;cursor:pointer}
+.modal .close-modal:hover{color:#fff}
+
+@media(max-width:900px){.tier-selector{grid-template-columns:repeat(2,1fr)}}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0d0d0d}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo">UnfollowIQ</div>
+  <a href="/dashboard" class="active">Dashboard</a>
+  <a href="#" onclick="document.getElementById('connectSection').scrollIntoView()">Connect Instagram</a>
+  <a href="#" onclick="document.getElementById('nfSection').scrollIntoView()">Non-Followers</a>
+  <a href="#" onclick="document.getElementById('logSection').scrollIntoView()">Activity Log</a>
+  <a href="#" onclick="logout()">Log Out</a>
+  <div class="user-info">
+    <div>Signed in as</div>
+    <div class="email" id="userEmail">Loading...</div>
+  </div>
+</div>
+
+<div class="main">
+  <h1>Dashboard</h1>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card blue"><div class="value" id="statFollowing">â</div><div class="label">Following</div></div>
+    <div class="stat-card purple"><div class="value" id="statFollowers">â</div><div class="label">Followers</div></div>
+    <div class="stat-card red"><div class="value" id="statNonFollowers">â</div><div class="label">Don't Follow Back</div></div>
+    <div class="stat-card green"><div class="value" id="statUnfollowed">â</div><div class="label">Unfollowed</div></div>
+  </div>
+
+  <!-- Connect Instagram -->
+  <div class="section" id="connectSection">
+    <h2>Connect Instagram</h2>
+    <div id="connectStatus"></div>
+    <div id="connectForm" style="margin-top:16px">
+      <p style="font-size:14px;color:#aaa;margin-bottom:16px">To connect, you need your Instagram session cookies. Here's how to get them:</p>
+      <ol style="font-size:13px;color:#888;margin-left:20px;line-height:2">
+        <li>Open <a href="https://instagram.com" target="_blank" style="color:#667eea">instagram.com</a> in your browser and log in</li>
+        <li>Press <strong style="color:#fff">F12</strong> to open Developer Tools</li>
+        <li>Go to <strong style="color:#fff">Application</strong> tab &rarr; <strong style="color:#fff">Cookies</strong> &rarr; <strong style="color:#fff">instagram.com</strong></li>
+        <li>Copy the value of <code style="background:#222;padding:2px 6px;border-radius:3px;color:#667eea">sessionid</code></li>
+        <li>Copy the value of <code style="background:#222;padding:2px 6px;border-radius:3px;color:#667eea">csrftoken</code></li>
+      </ol>
+      <div class="connect-form" style="margin-top:16px">
+        <div><label>Session ID</label><input id="inputSessionId" placeholder="Paste your sessionid cookie"></div>
+        <div><label>CSRF Token</label><input id="inputCsrfToken" placeholder="Paste your csrftoken cookie"></div>
+        <div><button class="btn btn-primary" onclick="connectInstagram()">Connect Instagram</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Progress -->
+  <div class="section" id="jobSection" style="display:none">
+    <h2>Job Progress</h2>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="job-info">
+      <div class="item">Status: <strong id="jobStatus">â</strong></div>
+      <div class="item">Processed: <strong id="jobProcessed">0</strong> / <strong id="jobTotal">0</strong></div>
+      <div class="item">Unfollowed: <strong id="jobUnfollowed" style="color:#2ecc71">0</strong></div>
+      <div class="item">Errors: <strong id="jobErrors" style="color:#e74c3c">0</strong></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" id="btnScan" onclick="startScan()">Scan Account</button>
+      <button class="btn btn-danger" id="btnUnfollow" onclick="startUnfollow()" disabled>Start Auto-Unfollow</button>
+      <button class="btn btn-stop" id="btnStop" onclick="stopJob()" style="display:none">Stop</button>
+    </div>
+
+    <!-- Account Tier Selector -->
+    <div style="margin-top:20px">
+      <label style="font-size:13px;color:#aaa;display:block;margin-bottom:8px">Select your account type:</label>
+      <div class="tier-selector" id="tierSelector">
+        <div class="tier-option" data-tier="new" onclick="selectTier('new')">
+          <div class="tier-name">New</div>
+          <div class="tier-desc">0-3 months<br>&lt;1K followers</div>
+          <div class="tier-limit">80/day</div>
+        </div>
+        <div class="tier-option selected" data-tier="growing" onclick="selectTier('growing')">
+          <div class="tier-name">Growing</div>
+          <div class="tier-desc">3-12 months<br>1K-5K followers</div>
+          <div class="tier-limit">150/day</div>
+        </div>
+        <div class="tier-option" data-tier="established" onclick="selectTier('established')">
+          <div class="tier-name">Established</div>
+          <div class="tier-desc">1+ year<br>5K-50K followers</div>
+          <div class="tier-limit">200/day</div>
+        </div>
+        <div class="tier-option" data-tier="large" onclick="selectTier('large')">
+          <div class="tier-name">Large</div>
+          <div class="tier-desc">2+ years<br>50K+ followers</div>
+          <div class="tier-limit">300/day</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Estimate -->
+    <div class="estimate-bar" id="estimateBar" style="display:none">
+      <div class="est-item">Estimated time: <strong id="estTime">â</strong></div>
+      <div class="est-item">Active hours: <strong id="estActive">â</strong></div>
+      <div class="est-item">Daily limit: <strong id="estDaily">â</strong>/day</div>
+      <button class="btn-explain" onclick="showExplainer()">Why does this take so long?</button>
+    </div>
+
+    <div style="margin-top:12px">
+      <label style="font-size:13px;color:#aaa">Whitelist (comma-separated usernames to protect):</label>
+      <input class="whitelist-input" id="whitelistInput" placeholder="friend1, friend2, bestie">
+    </div>
+  </div>
+
+  <!-- Why This Takes Long Modal -->
+  <div class="modal-overlay" id="explainerModal">
+    <div class="modal">
+      <button class="close-modal" onclick="hideExplainer()">&times;</button>
+      <h3>Why does this take so long?</h3>
+      <p>Instagram actively monitors for automated behavior. Accounts that unfollow too quickly get temporarily banned or permanently restricted.</p>
+      <p>UnfollowIQ protects your account by:</p>
+      <p><strong style="color:#fff">Human-like timing</strong> &mdash; Each unfollow waits a random amount of time (sometimes 25s, sometimes 90s) to mimic how a real person would browse. No two delays are the same.</p>
+      <p><strong style="color:#fff">Daily limits</strong> &mdash; Your account tier determines how many unfollows per day are safe. After hitting the limit, we pause for several hours before the next batch.</p>
+      <p><strong style="color:#fff">Smart pacing</strong> &mdash; If Instagram sends a rate-limit signal, we automatically back off and wait before retrying.</p>
+      <p style="color:#667eea;font-size:12px;margin-top:8px">Think of it like unfollowing manually â it just takes time, but your account stays safe.</p>
+    </div>
+  </div>
+
+  <!-- Non-Followers List -->
+  <div class="section" id="nfSection" style="display:none">
+    <h2>Non-Followers (<span id="nfCount">0</span>)</h2>
+    <input class="search-input" id="nfSearch" placeholder="Search usernames..." oninput="filterNF()">
+    <div class="nf-list" id="nfList"></div>
+    <button class="btn btn-secondary" style="margin-top:12px" onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="section" id="logSection">
+    <h2>Activity Log</h2>
+    <div class="log-area" id="logArea"><div class="log-entry info">Welcome! Connect your Instagram to get started.</div></div>
+  </div>
+</div>
+
+<script>
+// ===== TIER DATA (mirrors backend) =====
+const TIERS = {
+  new: { label: 'New', dailyLimit: 80, avgDelay: 80, cooldownHours: 10 },
+  growing: { label: 'Growing', dailyLimit: 150, avgDelay: 55, cooldownHours: 8 },
+  established: { label: 'Established', dailyLimit: 200, avgDelay: 45, cooldownHours: 6 },
+  large: { label: 'Large', dailyLimit: 300, avgDelay: 35, cooldownHours: 5 }
+};
+let selectedTier = 'growing';
+
+function selectTier(key) {
+  selectedTier = key;
+  document.querySelectorAll('.tier-option').forEach(el => el.classList.remove('selected'));
+  document.querySelector('[data-tier="' + key + '"]').classList.add('selected');
+  updateEstimate();
+}
+
+function updateEstimate() {
+  const t = TIERS[selectedTier];
+  const countEl = document.getElementById('statNonFollowers');
+  const count = parseInt(countEl.textContent) || 0;
+  if (count === 0) { document.getElementById('estimateBar').style.display = 'none'; return; }
+
+  document.getElementById('estimateBar').style.display = 'flex';
+  const fullDays = Math.floor(count / t.dailyLimit);
+  const remainder = count % t.dailyLimit;
+  const totalDays = fullDays + (remainder > 0 ? 1 : 0);
+  const totalActiveHours = Math.round((count * t.avgDelay) / 3600 * 10) / 10;
+  const activePerDay = (t.dailyLimit * t.avgDelay) / 3600;
+  const calHours = Math.round((fullDays * (activePerDay + t.cooldownHours) + remainder * t.avgDelay / 3600) * 10) / 10;
+
+  document.getElementById('estTime').textContent = totalDays <= 1 ? totalDays + ' day (~' + calHours + 'h)' : totalDays + ' days (~' + calHours + 'h)';
+  document.getElementById('estActive').textContent = totalActiveHours + 'h';
+  document.getElementById('estDaily').textContent = t.dailyLimit;
+}
+
+function showExplainer() { document.getElementById('explainerModal').classList.add('show'); }
+function hideExplainer() { document.getElementById('explainerModal').classList.remove('show'); }
+document.getElementById('explainerModal').addEventListener('click', function(e) { if (e.target === this) hideExplainer(); });
+
+// ===== API HELPERS =====
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...opts.headers } });
+  return res.json();
+}
+
+// ===== AUTH =====
+async function checkAuth() {
+  const data = await api('/api/auth/me');
+  if (data.error) { window.location.href = '/login'; return; }
+  document.getElementById('userEmail').textContent = data.user.email;
+}
+
+async function logout() {
+  await api('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+// ===== CONNECT INSTAGRAM =====
+async function connectInstagram() {
+  const sessionId = document.getElementById('inputSessionId').value.trim();
+  const csrfToken = document.getElementById('inputCsrfToken').value.trim();
+  if (!sessionId || !csrfToken) { alert('Both fields are required'); return; }
+
+  const data = await api('/api/instagram/connect', {
+    method: 'POST',
+    body: JSON.stringify({ sessionId, csrfToken })
+  });
+
+  if (data.success) {
+    refreshStatus();
+  } else {
+    alert(data.error || 'Failed to connect');
+  }
+}
+
+// ===== STATUS =====
+let pollInterval;
+
+async function refreshStatus() {
+  const data = await api('/api/instagram/status');
+
+  // Connection status
+  const statusEl = document.getElementById('connectStatus');
+  if (data.connected) {
+    statusEl.innerHTML = '<div class="connect-status">Connected as <strong>@' + (data.username || 'unknown') + '</strong></div>';
+    document.getElementById('jobSection').style.display = 'block';
+  } else {
+    statusEl.innerHTML = '<div class="connect-status disconnected">Not connected</div>';
+  }
+
+  // Stats
+  if (data.stats) {
+    document.getElementById('statNonFollowers').textContent = data.stats.total || 'â';
+    document.getElementById('statUnfollowed').textContent = data.stats.unfollowed || '0';
+    if (data.stats.total > 0) {
+      document.getElementById('nfSection').style.display = 'block';
+      document.getElementById('btnUnfollow').disabled = data.stats.pending === 0;
+      updateEstimate();
+    }
+  }
+
+  // Job
+  if (data.job) {
+    const pct = data.job.total > 0 ? Math.round((data.job.processed / data.job.total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('jobStatus').textContent = data.job.status;
+    document.getElementById('jobProcessed').textContent = data.job.processed;
+    document.getElementById('jobTotal').textContent = data.job.total;
+    document.getElementById('jobUnfollowed').textContent = data.job.unfollowed;
+    document.getElementById('jobErrors').textContent = data.job.errors;
+
+    if (data.job.status === 'running') {
+      document.getElementById('btnScan').disabled = true;
+      document.getElementById('btnUnfollow').style.display = 'none';
+      document.getElementById('btnStop').style.display = 'inline-block';
+    } else {
+      document.getElementById('btnScan').disabled = false;
+      document.getElementById('btnUnfollow').style.display = 'inline-block';
+      document.getElementById('btnStop').style.display = 'none';
+    }
+  }
+
+  // Refresh logs
+  refreshLogs();
+}
+
+async function refreshLogs() {
+  const data = await api('/api/instagram/logs');
+  if (data.logs) {
+    const area = document.getElementById('logArea');
+    area.innerHTML = data.logs.reverse().map(l =>
+      '<div class="log-entry ' + l.level + '">[' + new Date(l.created_at).toLocaleTimeString() + '] ' + l.message + '</div>'
+    ).join('');
+    area.scrollTop = area.scrollHeight;
+  }
+}
+
+// ===== ACTIONS =====
+async function startScan() {
+  const data = await api('/api/instagram/scan', { method: 'POST' });
+  if (data.success) {
+    // Start polling
+    if (!pollInterval) pollInterval = setInterval(refreshStatus, 3000);
+    refreshStatus();
+  } else {
+    alert(data.error || 'Failed to start scan');
+  }
+}
+
+async function startUnfollow() {
+  const wl = document.getElementById('whitelistInput').value.split(',').map(s => s.trim()).filter(Boolean);
+  const data = await api('/api/instagram/unfollow/start', {
+    method: 'POST',
+    body: JSON.stringify({ whitelist: wl, accountTier: selectedTier })
+  });
+  if (data.success) {
+    if (!pollInterval) pollInterval = setInterval(refreshStatus, 5000);
+    refreshStatus();
+  } else {
+    alert(data.error || 'Failed to start');
+  }
+}
+
+async function stopJob() {
+  await api('/api/instagram/unfollow/stop', { method: 'POST' });
+  refreshStatus();
+}
+
+// ===== NON-FOLLOWERS LIST =====
+let nfData = [];
+
+async function loadNonFollowers() {
+  const data = await api('/api/instagram/non-followers');
+  if (data.nonFollowers) {
+    nfData = data.nonFollowers;
+    document.getElementById('nfCount').textContent = nfData.length;
+    renderNF(nfData);
+  }
+}
+
+function renderNF(list) {
+  document.getElementById('nfList').innerHTML = list.map(u => {
+    const badge = u.status === 'unfollowed' ? 'badge-unfollowed' : u.status === 'error' ? 'badge-error' : 'badge-pending';
+    return '<div class="nf-item"><div class="name"><a href="https://instagram.com/' + u.ig_username + '" target="_blank">@' + u.ig_username + '</a> <span style="color:#666;font-size:12px">' + (u.full_name||'') + '</span></div><span class="badge ' + badge + '">' + u.status + '</span></div>';
+  }).join('');
+}
+
+function filterNF() {
+  const q = document.getElementById('nfSearch').value.toLowerCase();
+  renderNF(nfData.filter(u => u.ig_username.toLowerCase().includes(q)));
+}
+
+function exportCSV() {
+  const rows = [['username', 'full_name', 'status']];
+  nfData.forEach(u => rows.push([u.ig_username, u.full_name, u.status]));
+  const csv = rows.map(r => r.map(v => '"' + v + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'non_followers.csv'; a.click();
+}
+
+// ===== INIT =====
+checkAuth();
+refreshStatus();
+loadNonFollowers();
+// Poll status every 5 seconds
+pollInterval = setInterval(() => { refreshStatus(); loadNonFollowers(); }, 5000);
+</script>
+</body>
+</html>
