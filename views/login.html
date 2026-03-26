@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnfollowIQ â Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:16px;padding:40px;width:100%;max-width:420px}
+.logo{font-size:28px;font-weight:800;text-align:center;margin-bottom:8px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{text-align:center;color:#666;font-size:14px;margin-bottom:32px}
+.tabs{display:flex;margin-bottom:24px;border-bottom:1px solid #222}
+.tab{flex:1;text-align:center;padding:12px;cursor:pointer;color:#666;font-weight:600;transition:all .2s;border-bottom:2px solid transparent}
+.tab.active{color:#fff;border-bottom-color:#667eea}
+.form{display:none}
+.form.active{display:block}
+label{display:block;font-size:13px;color:#aaa;margin-bottom:6px;margin-top:16px}
+input{width:100%;padding:12px 16px;background:#111;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;outline:none;transition:border-color .2s}
+input:focus{border-color:#667eea}
+.btn{width:100%;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:24px;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(102,126,234,.4)}
+.error{color:#e74c3c;font-size:13px;margin-top:12px;text-align:center;display:none}
+.back{text-align:center;margin-top:20px}
+.back a{color:#667eea;font-size:13px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">UnfollowIQ</div>
+  <p class="sub">Clean your Instagram following</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Log In</div>
+    <div class="tab" onclick="switchTab('register')">Sign Up</div>
+  </div>
+
+  <form class="form active" id="loginForm" onsubmit="handleLogin(event)">
+    <label>Email</label>
+    <input type="email" id="loginEmail" required placeholder="you@email.com">
+    <label>Password</label>
+    <input type="password" id="loginPassword" required placeholder="â¢â¢â¢â¢â¢â¢â¢â¢">
+    <button type="submit" class="btn btn-primary">Log In</button>
+    <div class="error" id="loginError"></div>
+  </form>
+
+  <form class="form" id="registerForm" onsubmit="handleRegister(event)">
+    <label>Email</label>
+    <input type="email" id="regEmail" required placeholder="you@email.com">
+    <label>Password</label>
+    <input type="password" id="regPassword" required placeholder="Min 6 characters">
+    <label>Confirm Password</label>
+    <input type="password" id="regConfirm" required placeholder="â¢â¢â¢â¢â¢â¢â¢â¢">
+    <button type="submit" class="btn btn-primary">Create Account</button>
+    <div class="error" id="regError"></div>
+  </form>
+
+  <div class="back"><a href="/">&larr; Back to home</a></div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+  if (tab === 'login') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('loginForm').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('registerForm').classList.add('active');
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value
+      })
+    });
+    const data = await res.json();
+    if (data.success) { window.location.href = '/dashboard'; }
+    else { errEl.textContent = data.error; errEl.style.display = 'block'; }
+  } catch { errEl.textContent = 'Network error'; errEl.style.display = 'block'; }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('regError');
+  errEl.style.display = 'none';
+  const pw = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regConfirm').value;
+  if (pw !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('regEmail').value,
+        password: pw
+      })
+    });
+    const data = await res.json();
+    if (data.success) { window.location.href = '/dashboard'; }
+    else { errEl.textContent = data.error; errEl.style.display = 'block'; }
+  } catch { errEl.textContent = 'Network error'; errEl.style.display = 'block'; }
+}
+
+// If already logged in, redirect
+fetch('/api/auth/me').then(r => { if (r.ok) window.location.href = '/dashboard'; });
+</script>
+</body>
+</html>
