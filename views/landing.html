@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnfollowIQ â Clean Your Instagram Following Automatically</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+nav{padding:20px 0;border-bottom:1px solid #1a1a1a}
+nav .container{display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+nav .links a{margin-left:24px;color:#aaa;font-size:14px;transition:color .2s}
+nav .links a:hover{color:#fff}
+.btn{display:inline-block;padding:10px 24px;border-radius:8px;font-weight:600;font-size:14px;transition:all .2s;border:none;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.4)}
+.btn-outline{border:1px solid #444;color:#fff;background:transparent}
+.btn-outline:hover{border-color:#667eea;color:#667eea}
+
+/* Hero */
+.hero{padding:100px 0 80px;text-align:center}
+.hero h1{font-size:56px;font-weight:800;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#fff 0%,#667eea 50%,#764ba2 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:20px;color:#888;max-width:600px;margin:0 auto 40px;line-height:1.6}
+.hero-cta{display:flex;gap:16px;justify-content:center}
+.hero-stats{display:flex;gap:48px;justify-content:center;margin-top:60px}
+.hero-stats .stat{text-align:center}
+.hero-stats .stat .num{font-size:36px;font-weight:800;color:#667eea}
+.hero-stats .stat .label{font-size:13px;color:#666;margin-top:4px}
+
+/* Features */
+.features{padding:80px 0;border-top:1px solid #111}
+.features h2{text-align:center;font-size:36px;margin-bottom:48px}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:16px;padding:32px;transition:border-color .3s}
+.feature-card:hover{border-color:#333}
+.feature-card .icon{font-size:32px;margin-bottom:16px}
+.feature-card h3{font-size:18px;margin-bottom:8px}
+.feature-card p{font-size:14px;color:#888;line-height:1.6}
+
+/* How it works */
+.how{padding:80px 0;border-top:1px solid #111}
+.how h2{text-align:center;font-size:36px;margin-bottom:48px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.step{text-align:center;padding:24px}
+.step .num{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);font-size:20px;font-weight:700;margin-bottom:16px}
+.step h3{font-size:18px;margin-bottom:8px}
+.step p{font-size:14px;color:#888;line-height:1.5}
+
+/* Pricing */
+.pricing{padding:80px 0;border-top:1px solid #111}
+.pricing h2{text-align:center;font-size:36px;margin-bottom:12px}
+.pricing .sub{text-align:center;color:#888;margin-bottom:48px;font-size:16px}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:900px;margin:0 auto}
+.price-card{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:16px;padding:32px;text-align:center;position:relative}
+.price-card.popular{border-color:#667eea;background:#0a0a1a}
+.price-card.popular::before{content:'MOST POPULAR';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:20px}
+.price-card h3{font-size:20px;margin-bottom:8px}
+.price-card .price{font-size:42px;font-weight:800;margin:16px 0}
+.price-card .price span{font-size:16px;color:#888;font-weight:400}
+.price-card ul{list-style:none;text-align:left;margin:24px 0}
+.price-card li{padding:8px 0;font-size:14px;color:#ccc;border-bottom:1px solid #1a1a1a}
+.price-card li::before{content:'â ';color:#667eea;font-weight:700}
+.price-card .btn{width:100%;margin-top:16px;display:block;text-align:center;padding:12px}
+
+/* Footer */
+footer{padding:40px 0;border-top:1px solid #111;text-align:center;color:#444;font-size:13px}
+
+/* Mobile */
+@media(max-width:768px){
+  .hero h1{font-size:36px}
+  .feature-grid,.steps,.price-grid{grid-template-columns:1fr}
+  .hero-stats{flex-wrap:wrap;gap:24px}
+}
+</style>
+</head>
+<body>
+<nav><div class="container">
+  <div class="logo">UnfollowIQ</div>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#how">How it Works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="/login" class="btn btn-primary" style="margin-left:16px">Get Started</a>
+  </div>
+</div></nav>
+
+<section class="hero"><div class="container">
+  <h1>Clean Your Instagram.<br>Automatically.</h1>
+  <p>Find out who doesn't follow you back and remove them â all on autopilot. No browser needed. Just set it and forget it.</p>
+  <div class="hero-cta">
+    <a href="/login" class="btn btn-primary" style="font-size:16px;padding:14px 32px">Start Free</a>
+    <a href="#how" class="btn btn-outline" style="font-size:16px;padding:14px 32px">See How It Works</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="num">2M+</div><div class="label">Accounts Cleaned</div></div>
+    <div class="stat"><div class="num">45s</div><div class="label">Safe Delay</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">Bans Reported</div></div>
+  </div>
+</div></section>
+
+<section class="features" id="features"><div class="container">
+  <h2>Built for Safety and Speed</h2>
+  <div class="feature-grid">
+    <div class="feature-card"><div class="icon">ð¡ï¸</div><h3>Ban-Proof Pacing</h3><p>45-second delays with random jitter between each unfollow. Automatic cooldowns between batches. Mimics real human behavior.</p></div>
+    <div class="feature-card"><div class="icon">âï¸</div><h3>Runs in the Cloud</h3><p>No need to keep your browser or computer open. Our servers handle the unfollowing 24/7 in the background.</p></div>
+    <div class="feature-card"><div class="icon">ð</div><h3>Real-Time Dashboard</h3><p>Track every unfollow as it happens. See progress, logs, and stats. Come back anytime to check status.</p></div>
+    <div class="feature-card"><div class="icon">ð</div><h3>Whitelist Protection</h3><p>Protect the accounts you care about. Add usernames to your whitelist and they'll never be unfollowed.</p></div>
+    <div class="feature-card"><div class="icon">â¡</div><h3>One-Click Scan</h3><p>Connect your account and scan in minutes. Instantly see who doesn't follow you back with full details.</p></div>
+    <div class="feature-card"><div class="icon">ð¥</div><h3>Export to CSV</h3><p>Download your complete non-followers list as a CSV file. Review offline before taking any action.</p></div>
+  </div>
+</div></section>
+
+<section class="how" id="how"><div class="container">
+  <h2>How It Works</h2>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h3>Connect Your Instagram</h3><p>Securely link your Instagram session. We never store your password â only a temporary session token.</p></div>
+    <div class="step"><div class="num">2</div><h3>Scan Your Account</h3><p>We analyze your following and followers lists to find accounts that don't follow you back.</p></div>
+    <div class="step"><div class="num">3</div><h3>Auto-Unfollow</h3><p>Hit start and close your browser. Our server handles everything at a safe pace. Check back anytime.</p></div>
+  </div>
+</div></section>
+
+<section class="pricing" id="pricing"><div class="container">
+  <h2>Simple Pricing</h2>
+  <p class="sub">Start free. Upgrade when you need more.</p>
+  <div class="price-grid">
+    <div class="price-card">
+      <h3>Free</h3>
+      <div class="price">$0<span>/mo</span></div>
+      <ul>
+        <li>Scan followers & following</li>
+        <li>See non-followers list</li>
+        <li>Export to CSV</li>
+        <li>50 unfollows per month</li>
+      </ul>
+      <a href="/login" class="btn btn-outline">Get Started</a>
+    </div>
+    <div class="price-card popular">
+      <h3>Pro</h3>
+      <div class="price">$9<span>/mo</span></div>
+      <ul>
+        <li>Everything in Free</li>
+        <li>Unlimited unfollows</li>
+        <li>Cloud processing 24/7</li>
+        <li>Priority support</li>
+        <li>Whitelist protection</li>
+      </ul>
+      <a href="/login" class="btn btn-primary">Start Free Trial</a>
+    </div>
+    <div class="price-card">
+      <h3>Agency</h3>
+      <div class="price">$29<span>/mo</span></div>
+      <ul>
+        <li>Everything in Pro</li>
+        <li>Up to 5 Instagram accounts</li>
+        <li>Scheduled recurring scans</li>
+        <li>API access</li>
+        <li>Dedicated support</li>
+      </ul>
+      <a href="/login" class="btn btn-outline">Contact Us</a>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="container">
+  <p>&copy; 2026 UnfollowIQ. All rights reserved. Not affiliated with Instagram or Meta.</p>
+</div></footer>
+</body>
+</html>
