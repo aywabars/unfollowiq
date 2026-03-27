@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UnfollowIQ â Dashboard</title>
+<title>UnfollowIQ &mdash; Dashboard</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh}
@@ -129,10 +129,10 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
 
   <!-- Stats -->
   <div class="stats">
-    <div class="stat-card blue"><div class="value" id="statFollowing">â</div><div class="label">Following</div></div>
-    <div class="stat-card purple"><div class="value" id="statFollowers">â</div><div class="label">Followers</div></div>
-    <div class="stat-card red"><div class="value" id="statNonFollowers">â</div><div class="label">Don't Follow Back</div></div>
-    <div class="stat-card green"><div class="value" id="statUnfollowed">â</div><div class="label">Unfollowed</div></div>
+    <div class="stat-card blue"><div class="value" id="statFollowing">&mdash;</div><div class="label">Following</div></div>
+    <div class="stat-card purple"><div class="value" id="statFollowers">&mdash;</div><div class="label">Followers</div></div>
+    <div class="stat-card red"><div class="value" id="statNonFollowers">&mdash;</div><div class="label">Don't Follow Back</div></div>
+    <div class="stat-card green"><div class="value" id="statUnfollowed">&mdash;</div><div class="label">Unfollowed</div></div>
   </div>
 
   <!-- Connect Instagram -->
@@ -161,7 +161,7 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
     <h2>Job Progress</h2>
     <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     <div class="job-info">
-      <div class="item">Status: <strong id="jobStatus">â</strong></div>
+      <div class="item">Status: <strong id="jobStatus">&mdash;</strong></div>
       <div class="item">Processed: <strong id="jobProcessed">0</strong> / <strong id="jobTotal">0</strong></div>
       <div class="item">Unfollowed: <strong id="jobUnfollowed" style="color:#2ecc71">0</strong></div>
       <div class="item">Errors: <strong id="jobErrors" style="color:#e74c3c">0</strong></div>
@@ -201,9 +201,9 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
 
     <!-- Time Estimate -->
     <div class="estimate-bar" id="estimateBar" style="display:none">
-      <div class="est-item">Estimated time: <strong id="estTime">â</strong></div>
-      <div class="est-item">Active hours: <strong id="estActive">â</strong></div>
-      <div class="est-item">Daily limit: <strong id="estDaily">â</strong>/day</div>
+      <div class="est-item">Estimated time: <strong id="estTime">&mdash;</strong></div>
+      <div class="est-item">Active hours: <strong id="estActive">&mdash;</strong></div>
+      <div class="est-item">Daily limit: <strong id="estDaily">&mdash;</strong>/day</div>
       <button class="btn-explain" onclick="showExplainer()">Why does this take so long?</button>
     </div>
 
@@ -223,7 +223,7 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
       <p><strong style="color:#fff">Human-like timing</strong> &mdash; Each unfollow waits a random amount of time (sometimes 25s, sometimes 90s) to mimic how a real person would browse. No two delays are the same.</p>
       <p><strong style="color:#fff">Daily limits</strong> &mdash; Your account tier determines how many unfollows per day are safe. After hitting the limit, we pause for several hours before the next batch.</p>
       <p><strong style="color:#fff">Smart pacing</strong> &mdash; If Instagram sends a rate-limit signal, we automatically back off and wait before retrying.</p>
-      <p style="color:#667eea;font-size:12px;margin-top:8px">Think of it like unfollowing manually â it just takes time, but your account stays safe.</p>
+      <p style="color:#667eea;font-size:12px;margin-top:8px">Think of it like unfollowing manually &mdash; it just takes time, but your account stays safe.</p>
     </div>
   </div>
 
@@ -335,7 +335,7 @@ async function refreshStatus() {
 
   // Stats
   if (data.stats) {
-    document.getElementById('statNonFollowers').textContent = data.stats.total || 'â';
+    document.getElementById('statNonFollowers').textContent = data.stats.total || '\u2014';
     document.getElementById('statUnfollowed').textContent = data.stats.unfollowed || '0';
     if (data.stats.total > 0) {
       document.getElementById('nfSection').style.display = 'block';
