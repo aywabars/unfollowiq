@@ -62,6 +62,72 @@ app.get('/api/auth/me', auth.requireAuth, (req, res) => {
 });
 
 // ===== INSTAGRAM ROUTES =====
+
+// Direct login with username/password
+app.post('/api/instagram/login', auth.requireAuth, async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+
+    const result = await instagram.loginWithCredentials(username, password);
+
+    if (result.success) {
+      // Verify the session works
+      const session = { session_id: result.sessionId, csrf_token: result.csrfToken };
+      const verify = await instagram.verifySession(session);
+
+      if (verify.valid) {
+        db.saveInstagramSession(req.user.id, {
+          sessionId: result.sessionId,
+          csrfToken: result.csrfToken,
+          igUserId: verify.userId ? String(verify.userId) : result.igUserId,
+          username: verify.username || result.username
+        });
+        return res.json({ success: true, username: verify.username || result.username });
+      } else {
+        return res.json({ success: false, message: 'Session verification failed. Please try again.' });
+      }
+    }
+
+    // Pass through 2FA or error responses
+    return res.json(result);
+  } catch (err) {
+    console.error('Instagram login error:', err.message);
+    res.status(500).json({ error: 'Login failed. Instagram may be temporarily blocking requests. Try again in a few minutes.' });
+  }
+});
+
+// Verify 2FA code
+app.post('/api/instagram/verify-2fa', auth.requireAuth, async (req, res) => {
+  try {
+    const { code, identifier, username, csrfToken } = req.body;
+    if (!code || !identifier) return res.status(400).json({ error: 'Security code required' });
+
+    const result = await instagram.verify2FA(identifier, code, username, csrfToken);
+
+    if (result.success) {
+      const session = { session_id: result.sessionId, csrf_token: result.csrfToken };
+      const verify = await instagram.verifySession(session);
+
+      if (verify.valid) {
+        db.saveInstagramSession(req.user.id, {
+          sessionId: result.sessionId,
+          csrfToken: result.csrfToken,
+          igUserId: verify.userId ? String(verify.userId) : result.igUserId,
+          username: verify.username || result.username
+        });
+        return res.json({ success: true, username: verify.username || result.username });
+      }
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error('2FA verify error:', err.message);
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
+  }
+});
+
+// Legacy cookie-based connect (keep as fallback)
 app.post('/api/instagram/connect', auth.requireAuth, (req, res) => {
   try {
     const { sessionId, csrfToken, igUserId, username } = req.body;
