@@ -140,19 +140,22 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
     <h2>Connect Instagram</h2>
     <div id="connectStatus"></div>
     <div id="connectForm" style="margin-top:16px">
-      <p style="font-size:14px;color:#aaa;margin-bottom:16px">To connect, you need your Instagram session cookies. Here's how to get them:</p>
-      <ol style="font-size:13px;color:#888;margin-left:20px;line-height:2">
-        <li>Open <a href="https://instagram.com" target="_blank" style="color:#667eea">instagram.com</a> in your browser and log in</li>
-        <li>Press <strong style="color:#fff">F12</strong> to open Developer Tools</li>
-        <li>Go to <strong style="color:#fff">Application</strong> tab &rarr; <strong style="color:#fff">Cookies</strong> &rarr; <strong style="color:#fff">instagram.com</strong></li>
-        <li>Copy the value of <code style="background:#222;padding:2px 6px;border-radius:3px;color:#667eea">sessionid</code></li>
-        <li>Copy the value of <code style="background:#222;padding:2px 6px;border-radius:3px;color:#667eea">csrftoken</code></li>
-      </ol>
-      <div class="connect-form" style="margin-top:16px">
-        <div><label>Session ID</label><input id="inputSessionId" placeholder="Paste your sessionid cookie"></div>
-        <div><label>CSRF Token</label><input id="inputCsrfToken" placeholder="Paste your csrftoken cookie"></div>
-        <div><button class="btn btn-primary" onclick="connectInstagram()">Connect Instagram</button></div>
+      <p style="font-size:14px;color:#aaa;margin-bottom:16px">Log in with your Instagram account to get started.</p>
+      <div class="connect-form">
+        <div><label>Instagram Username</label><input id="inputIgUsername" placeholder="your_username" autocomplete="username"></div>
+        <div><label>Instagram Password</label><input id="inputIgPassword" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password"></div>
+        <div id="twoFactorSection" style="display:none">
+          <label>Security Code (2FA)</label>
+          <input id="inputIg2FA" placeholder="Enter 6-digit code from your authenticator" maxlength="8">
+          <p class="help-text" id="twoFactorHelp">Check your authenticator app or SMS for the code.</p>
+        </div>
+        <div id="connectError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px"></div>
+        <div>
+          <button class="btn btn-primary" id="btnConnect" onclick="connectInstagram()">Connect Instagram</button>
+          <span id="connectSpinner" style="display:none;margin-left:12px;color:#888;font-size:13px">Connecting...</span>
+        </div>
       </div>
+      <p style="font-size:11px;color:#444;margin-top:12px">Your credentials are sent directly to Instagram's servers and are not stored.</p>
     </div>
   </div>
 
@@ -301,21 +304,100 @@ async function logout() {
 }
 
 // ===== CONNECT INSTAGRAM =====
+let twoFactorState = null;
+
 async function connectInstagram() {
-  const sessionId = document.getElementById('inputSessionId').value.trim();
-  const csrfToken = document.getElementById('inputCsrfToken').value.trim();
-  if (!sessionId || !csrfToken) { alert('Both fields are required'); return; }
+  const errorEl = document.getElementById('connectError');
+  const spinner = document.getElementById('connectSpinner');
+  const btn = document.getElementById('btnConnect');
+  errorEl.style.display = 'none';
 
-  const data = await api('/api/instagram/connect', {
-    method: 'POST',
-    body: JSON.stringify({ sessionId, csrfToken })
-  });
+  // If we're in 2FA mode, verify the code
+  if (twoFactorState) {
+    const code = document.getElementById('inputIg2FA').value.trim();
+    if (!code) { showConnectError('Please enter your security code.'); return; }
 
-  if (data.success) {
-    refreshStatus();
-  } else {
-    alert(data.error || 'Failed to connect');
+    btn.disabled = true;
+    spinner.style.display = 'inline';
+    btn.textContent = 'Verifying...';
+
+    try {
+      const data = await api('/api/instagram/verify-2fa', {
+        method: 'POST',
+        body: JSON.stringify({
+          code,
+          identifier: twoFactorState.identifier,
+          username: twoFactorState.username,
+          csrfToken: twoFactorState.csrfToken
+        })
+      });
+
+      if (data.success) {
+        twoFactorState = null;
+        document.getElementById('twoFactorSection').style.display = 'none';
+        refreshStatus();
+      } else {
+        showConnectError(data.message || data.error || 'Invalid code. Please try again.');
+      }
+    } catch (err) {
+      showConnectError('Connection error. Please try again.');
+    }
+
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btn.textContent = 'Verify Code';
+    return;
   }
+
+  // Normal login flow
+  const username = document.getElementById('inputIgUsername').value.trim();
+  const password = document.getElementById('inputIgPassword').value.trim();
+  if (!username || !password) { showConnectError('Username and password are required.'); return; }
+
+  btn.disabled = true;
+  spinner.style.display = 'inline';
+  btn.textContent = 'Connecting...';
+
+  try {
+    const data = await api('/api/instagram/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+
+    if (data.success) {
+      document.getElementById('inputIgPassword').value = '';
+      refreshStatus();
+    } else if (data.twoFactorRequired) {
+      // Show 2FA input
+      twoFactorState = data.twoFactorInfo;
+      document.getElementById('twoFactorSection').style.display = 'block';
+      document.getElementById('twoFactorHelp').textContent =
+        data.twoFactorInfo.methods.includes('totp')
+          ? 'Enter the code from your authenticator app.'
+          : 'A code was sent to your phone via SMS.';
+      document.getElementById('inputIg2FA').focus();
+      btn.textContent = 'Verify Code';
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      return;
+    } else if (data.challengeRequired) {
+      showConnectError(data.message);
+    } else {
+      showConnectError(data.message || data.error || 'Login failed. Please check your credentials.');
+    }
+  } catch (err) {
+    showConnectError('Connection error. Please try again.');
+  }
+
+  btn.disabled = false;
+  spinner.style.display = 'none';
+  btn.textContent = 'Connect Instagram';
+}
+
+function showConnectError(msg) {
+  const el = document.getElementById('connectError');
+  el.textContent = msg;
+  el.style.display = 'block';
 }
 
 // ===== STATUS =====
