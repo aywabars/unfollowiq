@@ -157,6 +157,31 @@ app.post('/api/instagram/verify-2fa', auth.requireAuth, async (req, res) => {
   }
 });
 
+// Quick connect with session cookie
+app.post('/api/instagram/connect-cookie', auth.requireAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ error: 'Session cookie is required' });
+
+    const result = await instagram.loginWithCookie(sessionId.trim());
+
+    if (result.success) {
+      db.saveInstagramSession(req.user.id, {
+        sessionId: result.sessionId,
+        csrfToken: result.csrfToken,
+        igUserId: result.igUserId,
+        username: result.username
+      });
+      return res.json({ success: true, username: result.username });
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error('Cookie login error:', err.message);
+    res.status(500).json({ error: 'Failed to verify session. Please try again.' });
+  }
+});
+
 // Legacy cookie-based connect (keep as fallback)
 app.post('/api/instagram/connect', auth.requireAuth, (req, res) => {
   try {
