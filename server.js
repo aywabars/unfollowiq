@@ -97,6 +97,36 @@ app.post('/api/instagram/login', auth.requireAuth, async (req, res) => {
   }
 });
 
+// Verify challenge/checkpoint code
+app.post('/api/instagram/verify-challenge', auth.requireAuth, async (req, res) => {
+  try {
+    const { code, checkpointUrl, csrfToken, cookies, username } = req.body;
+    if (!code || !checkpointUrl) return res.status(400).json({ error: 'Verification code required' });
+
+    const result = await instagram.verifyChallenge(checkpointUrl, code, csrfToken, cookies, username);
+
+    if (result.success) {
+      const session = { session_id: result.sessionId, csrf_token: result.csrfToken };
+      const verify = await instagram.verifySession(session);
+
+      if (verify.valid) {
+        db.saveInstagramSession(req.user.id, {
+          sessionId: result.sessionId,
+          csrfToken: result.csrfToken,
+          igUserId: verify.userId ? String(verify.userId) : result.igUserId,
+          username: verify.username || result.username
+        });
+        return res.json({ success: true, username: verify.username || result.username });
+      }
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error('Challenge verify error:', err.message);
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
+  }
+});
+
 // Verify 2FA code
 app.post('/api/instagram/verify-2fa', auth.requireAuth, async (req, res) => {
   try {
