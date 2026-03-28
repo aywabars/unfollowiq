@@ -149,6 +149,11 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
           <input id="inputIg2FA" placeholder="Enter 6-digit code from your authenticator" maxlength="8">
           <p class="help-text" id="twoFactorHelp">Check your authenticator app or SMS for the code.</p>
         </div>
+        <div id="challengeSection" style="display:none">
+          <label>Verification Code</label>
+          <input id="inputIgChallenge" placeholder="Enter the code sent to your email/phone" maxlength="8">
+          <p class="help-text" id="challengeHelp" style="color:#aaa;font-size:12px">Instagram sent a security code to your email or phone. Enter it here.</p>
+        </div>
         <div id="connectError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px"></div>
         <div>
           <button class="btn btn-primary" id="btnConnect" onclick="connectInstagram()">Connect Instagram</button>
@@ -305,12 +310,51 @@ async function logout() {
 
 // ===== CONNECT INSTAGRAM =====
 let twoFactorState = null;
+let challengeState = null;
 
 async function connectInstagram() {
   const errorEl = document.getElementById('connectError');
   const spinner = document.getElementById('connectSpinner');
   const btn = document.getElementById('btnConnect');
   errorEl.style.display = 'none';
+
+  // If we're in challenge mode, verify the code
+  if (challengeState) {
+    const code = document.getElementById('inputIgChallenge').value.trim();
+    if (!code) { showConnectError('Please enter the verification code.'); return; }
+
+    btn.disabled = true;
+    spinner.style.display = 'inline';
+    btn.textContent = 'Verifying...';
+
+    try {
+      const data = await api('/api/instagram/verify-challenge', {
+        method: 'POST',
+        body: JSON.stringify({
+          code,
+          checkpointUrl: challengeState.checkpointUrl,
+          csrfToken: challengeState.csrfToken,
+          cookies: challengeState.cookies,
+          username: challengeState.username
+        })
+      });
+
+      if (data.success) {
+        challengeState = null;
+        document.getElementById('challengeSection').style.display = 'none';
+        refreshStatus();
+      } else {
+        showConnectError(data.message || data.error || 'Invalid code. Please try again.');
+      }
+    } catch (err) {
+      showConnectError('Connection error. Please try again.');
+    }
+
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btn.textContent = 'Verify Code';
+    return;
+  }
 
   // If we're in 2FA mode, verify the code
   if (twoFactorState) {
@@ -376,6 +420,16 @@ async function connectInstagram() {
           ? 'Enter the code from your authenticator app.'
           : 'A code was sent to your phone via SMS.';
       document.getElementById('inputIg2FA').focus();
+      btn.textContent = 'Verify Code';
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      return;
+    } else if (data.challengeRequired && data.challengeInfo) {
+      // Show challenge input - Instagram sent a code
+      challengeState = data.challengeInfo;
+      document.getElementById('challengeSection').style.display = 'block';
+      document.getElementById('challengeHelp').textContent = data.message || 'Instagram sent a security code to your email or phone. Enter it here.';
+      document.getElementById('inputIgChallenge').focus();
       btn.textContent = 'Verify Code';
       btn.disabled = false;
       spinner.style.display = 'none';
