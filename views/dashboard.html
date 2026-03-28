@@ -140,60 +140,25 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
     <h2>Connect Instagram</h2>
     <div id="connectStatus"></div>
     <div id="connectForm" style="margin-top:16px">
-      <!-- Method Tabs -->
-      <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid #222">
-        <button class="connect-tab active" id="tabCookie" onclick="switchConnectTab('cookie')" style="padding:10px 20px;background:none;border:none;color:#fff;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid #667eea;transition:all .2s">Quick Connect</button>
-        <button class="connect-tab" id="tabPassword" onclick="switchConnectTab('password')" style="padding:10px 20px;background:none;border:none;color:#666;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s">Username &amp; Password</button>
+      <!-- Step 1: Open Instagram -->
+      <div id="connectStep1" style="text-align:center;padding:10px 0">
+        <p style="color:#aaa;font-size:14px;margin-bottom:20px">Click below to open Instagram. Log in if you aren't already, then come back and click the connector.</p>
+        <button class="btn btn-primary" onclick="openInstagramLogin()" style="font-size:16px;padding:14px 36px">Open Instagram Login</button>
       </div>
 
-      <!-- Cookie Method (Primary) -->
-      <div id="methodCookie">
-        <div style="background:#0a0a1a;border:1px solid #1a1a3a;border-radius:10px;padding:18px;margin-bottom:16px">
-          <div style="font-size:14px;font-weight:600;color:#667eea;margin-bottom:8px">Recommended &mdash; No verification codes needed</div>
-          <div style="font-size:13px;color:#aaa;line-height:1.7">
-            1. Open <a href="https://www.instagram.com" target="_blank" style="color:#667eea">instagram.com</a> and make sure you're logged in<br>
-            2. Press <strong style="color:#fff">F12</strong> to open Developer Tools<br>
-            3. Go to <strong style="color:#fff">Application</strong> tab &rarr; <strong style="color:#fff">Cookies</strong> &rarr; <strong style="color:#fff">instagram.com</strong><br>
-            4. Find <strong style="color:#fff">sessionid</strong> and copy its value
+      <!-- Step 2: Run bookmarklet (shown after clicking Open Instagram) -->
+      <div id="connectStep2" style="display:none;margin-top:8px">
+        <div style="background:#0a0a1a;border:1px solid #1a1a3a;border-radius:10px;padding:20px;text-align:center">
+          <div style="font-size:15px;font-weight:600;color:#667eea;margin-bottom:10px">Almost there!</div>
+          <p style="color:#aaa;font-size:13px;line-height:1.7;margin-bottom:18px">
+            After logging into Instagram, drag the button below to your <strong style="color:#fff">bookmarks bar</strong>, then click it while on instagram.com.
+          </p>
+          <div style="margin-bottom:14px">
+            <a id="bookmarkletLink" href="#" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;cursor:grab;font-size:14px;box-shadow:0 4px 15px rgba(102,126,234,.3)">&#x1F517; Connect UnfollowIQ</a>
           </div>
+          <p style="color:#555;font-size:11px">Drag the purple button above into your bookmarks bar, then click it on the Instagram page</p>
         </div>
-        <div class="connect-form">
-          <div>
-            <label>Session Cookie (sessionid)</label>
-            <input id="inputIgCookie" placeholder="Paste your sessionid cookie value here" style="font-family:monospace;font-size:12px">
-          </div>
-          <div id="connectErrorCookie" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px"></div>
-          <div>
-            <button class="btn btn-primary" id="btnConnectCookie" onclick="connectWithCookie()">Connect Instagram</button>
-            <span id="connectSpinnerCookie" style="display:none;margin-left:12px;color:#888;font-size:13px">Verifying...</span>
-          </div>
-        </div>
-        <p style="font-size:11px;color:#444;margin-top:12px">Your session cookie is sent securely to verify your account. It is never shared with third parties.</p>
-      </div>
-
-      <!-- Password Method (Fallback) -->
-      <div id="methodPassword" style="display:none">
-        <p style="font-size:13px;color:#888;margin-bottom:16px">Instagram may ask for extra verification when logging in from our server. Use Quick Connect above to skip this.</p>
-        <div class="connect-form">
-          <div><label>Instagram Username</label><input id="inputIgUsername" placeholder="your_username" autocomplete="username"></div>
-          <div><label>Instagram Password</label><input id="inputIgPassword" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password"></div>
-          <div id="twoFactorSection" style="display:none">
-            <label>Security Code (2FA)</label>
-            <input id="inputIg2FA" placeholder="Enter 6-digit code from your authenticator" maxlength="8">
-            <p class="help-text" id="twoFactorHelp">Check your authenticator app or SMS for the code.</p>
-          </div>
-          <div id="challengeSection" style="display:none">
-            <label>Verification Code</label>
-            <input id="inputIgChallenge" placeholder="Enter the code sent to your email/phone" maxlength="8">
-            <p class="help-text" id="challengeHelp" style="color:#aaa;font-size:12px">Instagram sent a security code to your email or phone. Enter it here.</p>
-          </div>
-          <div id="connectError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px"></div>
-          <div>
-            <button class="btn btn-primary" id="btnConnect" onclick="connectInstagram()">Connect Instagram</button>
-            <span id="connectSpinner" style="display:none;margin-left:12px;color:#888;font-size:13px">Connecting...</span>
-          </div>
-        </div>
-        <p style="font-size:11px;color:#444;margin-top:12px">Your credentials are sent directly to Instagram's servers and are not stored.</p>
+        <div id="connectErrorMain" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px;margin-top:12px"></div>
       </div>
     </div>
   </div>
@@ -342,204 +307,51 @@ async function logout() {
   window.location.href = '/login';
 }
 
-// ===== CONNECT INSTAGRAM =====
-let twoFactorState = null;
-let challengeState = null;
+// ===== CONNECT INSTAGRAM (Popup + Bookmarklet) =====
+let igPopup = null;
 
-async function connectInstagram() {
-  const errorEl = document.getElementById('connectError');
-  const spinner = document.getElementById('connectSpinner');
-  const btn = document.getElementById('btnConnect');
-  errorEl.style.display = 'none';
+function openInstagramLogin() {
+  // Open Instagram in a popup window
+  igPopup = window.open('https://www.instagram.com/', 'ig_login', 'width=450,height=650,scrollbars=yes');
 
-  // If we're in challenge mode, verify the code
-  if (challengeState) {
-    const code = document.getElementById('inputIgChallenge').value.trim();
-    if (!code) { showConnectError('Please enter the verification code.'); return; }
+  // Show step 2 with bookmarklet
+  document.getElementById('connectStep1').style.display = 'none';
+  document.getElementById('connectStep2').style.display = 'block';
 
-    btn.disabled = true;
-    spinner.style.display = 'inline';
-    btn.textContent = 'Verifying...';
-
-    try {
-      const data = await api('/api/instagram/verify-challenge', {
-        method: 'POST',
-        body: JSON.stringify({
-          code,
-          checkpointUrl: challengeState.checkpointUrl,
-          csrfToken: challengeState.csrfToken,
-          cookies: challengeState.cookies,
-          username: challengeState.username
-        })
-      });
-
-      if (data.success) {
-        challengeState = null;
-        document.getElementById('challengeSection').style.display = 'none';
-        refreshStatus();
-      } else {
-        showConnectError(data.message || data.error || 'Invalid code. Please try again.');
-      }
-    } catch (err) {
-      showConnectError('Connection error. Please try again.');
-    }
-
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btn.textContent = 'Verify Code';
-    return;
-  }
-
-  // If we're in 2FA mode, verify the code
-  if (twoFactorState) {
-    const code = document.getElementById('inputIg2FA').value.trim();
-    if (!code) { showConnectError('Please enter your security code.'); return; }
-
-    btn.disabled = true;
-    spinner.style.display = 'inline';
-    btn.textContent = 'Verifying...';
-
-    try {
-      const data = await api('/api/instagram/verify-2fa', {
-        method: 'POST',
-        body: JSON.stringify({
-          code,
-          identifier: twoFactorState.identifier,
-          username: twoFactorState.username,
-          csrfToken: twoFactorState.csrfToken
-        })
-      });
-
-      if (data.success) {
-        twoFactorState = null;
-        document.getElementById('twoFactorSection').style.display = 'none';
-        refreshStatus();
-      } else {
-        showConnectError(data.message || data.error || 'Invalid code. Please try again.');
-      }
-    } catch (err) {
-      showConnectError('Connection error. Please try again.');
-    }
-
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btn.textContent = 'Verify Code';
-    return;
-  }
-
-  // Normal login flow
-  const username = document.getElementById('inputIgUsername').value.trim();
-  const password = document.getElementById('inputIgPassword').value.trim();
-  if (!username || !password) { showConnectError('Username and password are required.'); return; }
-
-  btn.disabled = true;
-  spinner.style.display = 'inline';
-  btn.textContent = 'Connecting...';
-
-  try {
-    const data = await api('/api/instagram/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password })
-    });
-
-    if (data.success) {
-      document.getElementById('inputIgPassword').value = '';
-      refreshStatus();
-    } else if (data.twoFactorRequired) {
-      // Show 2FA input
-      twoFactorState = data.twoFactorInfo;
-      document.getElementById('twoFactorSection').style.display = 'block';
-      document.getElementById('twoFactorHelp').textContent =
-        data.twoFactorInfo.methods.includes('totp')
-          ? 'Enter the code from your authenticator app.'
-          : 'A code was sent to your phone via SMS.';
-      document.getElementById('inputIg2FA').focus();
-      btn.textContent = 'Verify Code';
-      btn.disabled = false;
-      spinner.style.display = 'none';
-      return;
-    } else if (data.challengeRequired && data.challengeInfo) {
-      // Show challenge input - Instagram sent a code
-      challengeState = data.challengeInfo;
-      document.getElementById('challengeSection').style.display = 'block';
-      document.getElementById('challengeHelp').textContent = data.message || 'Instagram sent a security code to your email or phone. Enter it here.';
-      document.getElementById('inputIgChallenge').focus();
-      btn.textContent = 'Verify Code';
-      btn.disabled = false;
-      spinner.style.display = 'none';
-      return;
-    } else if (data.challengeRequired) {
-      showConnectError(data.message);
-    } else {
-      showConnectError(data.message || data.error || 'Login failed. Please check your credentials.');
-    }
-  } catch (err) {
-    showConnectError('Connection error. Please try again.');
-  }
-
-  btn.disabled = false;
-  spinner.style.display = 'none';
-  btn.textContent = 'Connect Instagram';
+  // Set the bookmarklet href
+  const callbackUrl = window.location.origin + '/connect-callback';
+  const bookmarkletCode = "javascript:void(window.location='" + callbackUrl + "?sessionId='+encodeURIComponent((document.cookie.match(/sessionid=([^;]+)/)||[])[1]||''))";
+  document.getElementById('bookmarkletLink').href = bookmarkletCode;
 }
 
-function showConnectError(msg) {
-  const el = document.getElementById('connectError');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
+// Handle URL params on page load (from bookmarklet redirect)
+(function handleConnectCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const connected = params.get('connected');
+  const error = params.get('error');
 
-// ===== TAB SWITCHING =====
-function switchConnectTab(tab) {
-  document.getElementById('methodCookie').style.display = tab === 'cookie' ? 'block' : 'none';
-  document.getElementById('methodPassword').style.display = tab === 'password' ? 'block' : 'none';
-  document.getElementById('tabCookie').style.color = tab === 'cookie' ? '#fff' : '#666';
-  document.getElementById('tabCookie').style.fontWeight = tab === 'cookie' ? '600' : '400';
-  document.getElementById('tabCookie').style.borderBottomColor = tab === 'cookie' ? '#667eea' : 'transparent';
-  document.getElementById('tabPassword').style.color = tab === 'password' ? '#fff' : '#666';
-  document.getElementById('tabPassword').style.fontWeight = tab === 'password' ? '600' : '400';
-  document.getElementById('tabPassword').style.borderBottomColor = tab === 'password' ? '#667eea' : 'transparent';
-}
-
-// ===== CONNECT WITH COOKIE =====
-async function connectWithCookie() {
-  const errorEl = document.getElementById('connectErrorCookie');
-  const spinner = document.getElementById('connectSpinnerCookie');
-  const btn = document.getElementById('btnConnectCookie');
-  const sessionId = document.getElementById('inputIgCookie').value.trim();
-  errorEl.style.display = 'none';
-
-  if (!sessionId) {
-    errorEl.textContent = 'Please paste your sessionid cookie value.';
-    errorEl.style.display = 'block';
-    return;
+  if (connected) {
+    // Successfully connected â clean URL and refresh
+    window.history.replaceState({}, '', '/dashboard');
+    // Close the Instagram popup if still open
+    if (igPopup && !igPopup.closed) igPopup.close();
   }
 
-  btn.disabled = true;
-  spinner.style.display = 'inline';
-  btn.textContent = 'Verifying...';
-
-  try {
-    const data = await api('/api/instagram/connect-cookie', {
-      method: 'POST',
-      body: JSON.stringify({ sessionId })
-    });
-
-    if (data.success) {
-      document.getElementById('inputIgCookie').value = '';
-      refreshStatus();
-    } else {
-      errorEl.textContent = data.message || data.error || 'Invalid session cookie. Please try again.';
-      errorEl.style.display = 'block';
+  if (error) {
+    window.history.replaceState({}, '', '/dashboard');
+    const errEl = document.getElementById('connectErrorMain');
+    if (errEl) {
+      errEl.textContent = error;
+      errEl.style.display = 'block';
     }
-  } catch (err) {
-    errorEl.textContent = 'Connection error. Please try again.';
-    errorEl.style.display = 'block';
+    // Show step 2 so user can retry
+    document.getElementById('connectStep1').style.display = 'none';
+    document.getElementById('connectStep2').style.display = 'block';
+    const callbackUrl = window.location.origin + '/connect-callback';
+    const bookmarkletCode = "javascript:void(window.location='" + callbackUrl + "?sessionId='+encodeURIComponent((document.cookie.match(/sessionid=([^;]+)/)||[])[1]||''))";
+    document.getElementById('bookmarkletLink').href = bookmarkletCode;
   }
-
-  btn.disabled = false;
-  spinner.style.display = 'none';
-  btn.textContent = 'Connect Instagram';
-}
+})()
 
 // ===== STATUS =====
 let pollInterval;
