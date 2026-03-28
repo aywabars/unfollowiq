@@ -274,6 +274,32 @@ app.get('/api/instagram/logs', auth.requireAuth, (req, res) => {
   }
 });
 
+// ===== BOOKMARKLET CALLBACK =====
+// User clicks bookmarklet on instagram.com -> redirects here with sessionId
+app.get('/connect-callback', auth.requireAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.query;
+    if (!sessionId) return res.redirect('/dashboard?error=No+session+found.+Make+sure+you+are+logged+into+Instagram.');
+
+    const result = await instagram.loginWithCookie(sessionId.trim());
+
+    if (result.success) {
+      db.saveInstagramSession(req.user.id, {
+        sessionId: result.sessionId,
+        csrfToken: result.csrfToken,
+        igUserId: result.igUserId,
+        username: result.username
+      });
+      return res.redirect('/dashboard?connected=' + encodeURIComponent(result.username));
+    }
+
+    return res.redirect('/dashboard?error=' + encodeURIComponent(result.message || 'Invalid or expired session. Please log into Instagram and try again.'));
+  } catch (err) {
+    console.error('Connect callback error:', err.message);
+    res.redirect('/dashboard?error=Connection+failed.+Please+try+again.');
+  }
+});
+
 // ===== PAGE ROUTES =====
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'landing.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'dashboard.html')));
