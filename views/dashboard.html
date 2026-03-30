@@ -90,7 +90,7 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
 .estimate-bar{background:#111;border:1px solid #1a1a1a;border-radius:8px;padding:14px 18px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .estimate-bar .est-item{font-size:13px;color:#aaa}
 .estimate-bar .est-item strong{color:#fff;font-size:15px}
-.btn-explain{background:none;border:1px solid #333;color:#888;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
+.btn-explain{background:none;border:1px solid #333;color:#888;padding:6px 14px;b/rder-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
 .btn-explain:hover{border-color:#667eea;color:#667eea}
 
 /* Modal */
@@ -140,34 +140,30 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
     <h2>Connect Instagram</h2>
     <div id="connectStatus"></div>
     <div id="connectForm" style="margin-top:16px">
-      <!-- Login Form -->
-      <div id="igLoginForm" class="connect-form">
-        <div>
-          <label>Instagram Username</label>
-          <input type="text" id="igUsername" placeholder="your_username" autocomplete="username">
-        </div>
-        <div>
-          <label>Instagram Password</label>
-          <input type="password" id="igPassword" placeholder="Enter your password" autocomplete="current-password">
-        </div>
-        <div id="connectError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px"></div>
-        <button class="btn btn-primary" id="btnConnect" onclick="connectInstagram()">Connect Instagram</button>
-        <p class="help-text">Your credentials are sent directly to Instagram's servers. We never store your password.</p>
+      <!-- Step 1: Open Instagram -->
+      <div id="connectStep1">
+        <button class="btn btn-primary" onclick="openInstagramLogin()" style="font-size:16px;padding:14px 28px">Connect Instagram</button>
+        <p class="help-text" style="margin-top:8px">Opens Instagram in a new tab. Log in there, then come back here.</p>
       </div>
 
-      <!-- 2FA / Challenge Verification (hidden by default) -->
-      <div id="igVerifyForm" class="connect-form" style="display:none">
-        <div style="background:#0a0a1a;border:1px solid #1a1a3a;border-radius:10px;padding:16px;margin-bottom:8px">
-          <div style="font-size:14px;font-weight:600;color:#667eea;margin-bottom:6px" id="verifyTitle">Enter Verification Code</div>
-          <p style="color:#aaa;font-size:13px;line-height:1.6" id="verifyMsg">Instagram sent a security code to your phone or email. Enter it below.</p>
+      <!-- Step 2: Complete Connection (shown after popup opens) -->
+      <div id="connectStep2" style="display:none">
+        <div style="background:#0a0a1a;border:1px solid #1a1a3a;border-radius:10px;padding:16px;margin-bottom:14px">
+          <div style="font-size:14px;font-weight:600;color:#667eea;margin-bottom:6px">Step 2: Complete the Connection</div>
+          <p style="color:#aaa;font-size:13px;line-height:1.6">After logging into Instagram, tap the button below <strong style="color:#fff">while on your Instagram tab</strong>.</p>
         </div>
-        <div>
-          <label>Security Code</label>
-          <input type="text" id="igVerifyCode" placeholder="Enter 6-digit code" maxlength="8" autocomplete="one-time-code" inputmode="numeric">
+        <p style="margin-bottom:10px">
+          <a id="grabCookieLink" class="btn btn-primary" style="display:inline-block;text-decoration:none;text-align:center;font-size:15px;padding:12px 24px" href="#">&#x1F517; Complete Connection</a>
+        </p>
+        <div style="background:#111;border:1px solid #222;border-radius:8px;padding:12px;margin-top:8px">
+          <p style="color:#aaa;font-size:12px;line-height:1.6;margin-bottom:6px"><strong style="color:#fff">How to use:</strong></p>
+          <p style="color:#888;font-size:12px;line-height:1.6">
+            <strong style="color:#ccc">Desktop:</strong> Drag the button above into your <strong style="color:#fff">bookmarks bar</strong>, switch to the Instagram tab, then click it from your bookmarks.<br>
+            <strong style="color:#ccc">Mobile:</strong> Long-press the button, <strong style="color:#fff">copy the link</strong>, switch to the Instagram tab, paste it in the address bar, and tap Go.
+          </p>
         </div>
-        <div id="verifyError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px"></div>
-        <button class="btn btn-primary" id="btnVerify" onclick="submitVerification()">Verify</button>
-        <button class="btn btn-secondary" onclick="resetConnectForm()">Back</button>
+        <div id="connectError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px;margin-top:8px"></div>
+        <button class="btn btn-secondary" style="margin-top:10px" onclick="resetConnectForm()">Start Over</button>
       </div>
     </div>
   </div>
@@ -317,106 +313,61 @@ async function logout() {
 }
 
 // ===== CONNECT INSTAGRAM =====
-let verifyState = {}; // stores 2FA/challenge data between steps
+let igPopup = null;
 
-async function connectInstagram() {
-  const username = document.getElementById('igUsername').value.trim();
-  const password = document.getElementById('igPassword').value;
-  if (!username || !password) return showConnectError('Please enter your username and password.');
-
-  const btn = document.getElementById('btnConnect');
-  btn.disabled = true; btn.textContent = 'Connecting...';
-  hideConnectError();
-
-  try {
-    const data = await api('/api/instagram/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password })
-    });
-
-    if (data.success) {
-      refreshStatus();
-      document.getElementById('igLoginForm').style.display = 'none';
-      return;
-    }
-
-    // 2FA required
-    if (data.requires2FA) {
-      verifyState = { type: '2fa', identifier: data.identifier, username, csrfToken: data.csrfToken };
-      document.getElementById('verifyTitle').textContent = 'Two-Factor Authentication';
-      document.getElementById('verifyMsg').textContent = 'Enter the code from your authenticator app or SMS.';
-      document.getElementById('igLoginForm').style.display = 'none';
-      document.getElementById('igVerifyForm').style.display = 'grid';
-      return;
-    }
-
-    // Challenge required (suspicious login)
-    if (data.requiresChallenge) {
-      verifyState = { type: 'challenge', checkpointUrl: data.checkpointUrl, csrfToken: data.csrfToken, cookies: data.cookies, username };
-      document.getElementById('verifyTitle').textContent = 'Security Check';
-      document.getElementById('verifyMsg').textContent = data.message || 'Instagram sent a security code to your phone or email. Enter it below.';
-      document.getElementById('igLoginForm').style.display = 'none';
-      document.getElementById('igVerifyForm').style.display = 'grid';
-      return;
-    }
-
-    showConnectError(data.message || data.error || 'Login failed. Please check your credentials.');
-  } catch (err) {
-    showConnectError('Connection error. Please try again.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Connect Instagram';
-  }
+function openInstagramLogin() {
+  igPopup = window.open('https://www.instagram.com/accounts/login/', '_blank', 'width=450,height=600');
+  // Set up the bookmarklet link
+  const callbackUrl = window.location.origin + '/connect-callback';
+  const bookmarkletCode = "javascript:void((function(){var s=document.cookie.match(/sessionid=([^;]+)/);if(s){window.location='" + callbackUrl + "?sessionId='+encodeURIComponent(s[1])}else{alert('Not logged in. Please log into Instagram first.')}})())";
+  document.getElementById('grabCookieLink').href = bookmarkletCode;
+  // Show step 2
+  document.getElementById('connectStep1').style.display = 'none';
+  document.getElementById('connectStep2').style.display = 'block';
+  // Poll for connection via callback (user may have completed it)
+  startConnectionPoll();
 }
 
-async function submitVerification() {
-  const code = document.getElementById('igVerifyCode').value.trim();
-  if (!code) return showVerifyError('Please enter the verification code.');
-
-  const btn = document.getElementById('btnVerify');
-  btn.disabled = true; btn.textContent = 'Verifying...';
-  hideVerifyError();
-
-  try {
-    let data;
-    if (verifyState.type === '2fa') {
-      data = await api('/api/instagram/verify-2fa', {
-        method: 'POST',
-        body: JSON.stringify({ code, identifier: verifyState.identifier, username: verifyState.username, csrfToken: verifyState.csrfToken })
-      });
-    } else {
-      data = await api('/api/instagram/verify-challenge', {
-        method: 'POST',
-        body: JSON.stringify({ code, checkpointUrl: verifyState.checkpointUrl, csrfToken: verifyState.csrfToken, cookies: verifyState.cookies, username: verifyState.username })
-      });
-    }
-
-    if (data.success) {
+let connectionPollId = null;
+function startConnectionPoll() {
+  if (connectionPollId) return;
+  connectionPollId = setInterval(async () => {
+    const data = await api('/api/instagram/status');
+    if (data.connected) {
+      clearInterval(connectionPollId);
+      connectionPollId = null;
       refreshStatus();
-      document.getElementById('igVerifyForm').style.display = 'none';
-      verifyState = {};
-      return;
     }
-
-    showVerifyError(data.message || data.error || 'Verification failed. Please try again.');
-  } catch (err) {
-    showVerifyError('Verification error. Please try again.');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Verify';
-  }
+  }, 3000);
 }
 
 function resetConnectForm() {
-  document.getElementById('igVerifyForm').style.display = 'none';
-  document.getElementById('igLoginForm').style.display = 'grid';
-  document.getElementById('igVerifyCode').value = '';
-  verifyState = {};
-  hideConnectError(); hideVerifyError();
+  document.getElementById('connectStep1').style.display = 'block';
+  document.getElementById('connectStep2').style.display = 'none';
+  hideConnectError();
+  if (connectionPollId) { clearInterval(connectionPollId); connectionPollId = null; }
 }
+
+// Handle callback URL params (from bookmarklet redirect)
+(function handleCallbackParams() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('connected')) {
+    // Clean URL
+    window.history.replaceState({}, '', '/dashboard');
+  }
+  if (params.get('error')) {
+    setTimeout(() => {
+      const el = document.getElementById('connectError');
+      if (el) { el.textContent = params.get('error'); el.style.display = 'block'; }
+      document.getElementById('connectStep1').style.display = 'none';
+      document.getElementById('connectStep2').style.display = 'block';
+    }, 500);
+    window.history.replaceState({}, '', '/dashboard');
+  }
+})();
 
 function showConnectError(msg) { const el = document.getElementById('connectError'); el.textContent = msg; el.style.display = 'block'; }
 function hideConnectError() { document.getElementById('connectError').style.display = 'none'; }
-function showVerifyError(msg) { const el = document.getElementById('verifyError'); el.textContent = msg; el.style.display = 'block'; }
-function hideVerifyError() { document.getElementById('verifyError').style.display = 'none'; }
 
 // ===== STATUS =====
 let pollInterval;
