@@ -193,7 +193,7 @@ async function handleLogin(e) {
         csrfToken: data.csrfToken || ci.csrfToken,
         cookies: data.cookies || ci.cookies,
         username: username,
-        serverRevision: data.serverRevision || null
+        useMobileApi: data.useMobileApi || null
       };
       console.log('Challenge data:', JSON.stringify(challengeData));
             // Log debug info from backend
