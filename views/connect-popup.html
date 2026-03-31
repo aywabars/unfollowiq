@@ -174,9 +174,9 @@ async function handleLogin(e) {
     // 2FA required
     if (data.twoFactorRequired || data.requires2FA) {
       twoFaData = {
-        identifier: data.twoFactorIdentifier || data.identifier,
+        identifier: data.identifier || (data.twoFactorInfo && data.twoFactorInfo.identifier),
         username: username,
-        csrfToken: data.csrfToken
+        csrfToken: data.csrfToken || (data.twoFactorInfo && data.twoFactorInfo.csrfToken)
       };
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('twoFaSection').style.display = 'block';
@@ -187,12 +187,19 @@ async function handleLogin(e) {
 
     // Challenge required (email/phone verification)
     if (data.challengeRequired || data.checkpoint) {
+      const ci = data.challengeInfo || {};
       challengeData = {
-        checkpointUrl: data.checkpointUrl,
-        csrfToken: data.csrfToken,
-        cookies: data.cookies,
+        checkpointUrl: data.checkpointUrl || ci.checkpointUrl,
+        csrfToken: data.csrfToken || ci.csrfToken,
+        cookies: data.cookies || ci.cookies,
         username: username
       };
+      console.log('Challenge data:', JSON.stringify(challengeData));
+      if (!challengeData.checkpointUrl) {
+        showError('errorMsg', 'Instagram requires verification but we could not start the process. Please log into instagram.com directly first, complete any security checks, then try again.');
+        setLoading('btnLogin', false);
+        return;
+      }
       if (data.challengeType) {
         document.getElementById('challengeMsg').textContent = data.challengeType === 'email'
           ? 'Instagram sent a code to your email.'
