@@ -100,10 +100,10 @@ app.post('/api/instagram/login', auth.requireAuth, async (req, res) => {
 // Verify challenge/checkpoint code
 app.post('/api/instagram/verify-challenge', auth.requireAuth, async (req, res) => {
   try {
-    const { code, checkpointUrl, csrfToken, cookies, username, serverRevision } = req.body;
+    const { code, checkpointUrl, csrfToken, cookies, username, useMobileApi } = req.body;
     if (!code || !checkpointUrl) return res.status(400).json({ error: 'Verification code required' });
 
-    const result = await instagram.verifyChallenge(checkpointUrl, code, csrfToken, cookies, username, serverRevision);
+    const result = await instagram.verifyChallenge(checkpointUrl, code, csrfToken, cookies, username, useMobileApi);
 
     if (result.success) {
       const session = { session_id: result.sessionId, csrf_token: result.csrfToken };
