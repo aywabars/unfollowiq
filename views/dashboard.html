@@ -90,7 +90,7 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
 .estimate-bar{background:#111;border:1px solid #1a1a1a;border-radius:8px;padding:14px 18px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .estimate-bar .est-item{font-size:13px;color:#aaa}
 .estimate-bar .est-item strong{color:#fff;font-size:15px}
-.btn-explain{background:none;border:1px solid #333;color:#888;padding:6px 14px;b/rder-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
+.btn-explain{background:none;border:1px solid #333;color:#888;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
 .btn-explain:hover{border-color:#667eea;color:#667eea}
 
 /* Modal */
@@ -140,31 +140,8 @@ h1{font-size:28px;font-weight:700;margin-bottom:24px}
     <h2>Connect Instagram</h2>
     <div id="connectStatus"></div>
     <div id="connectForm" style="margin-top:16px">
-      <!-- Step 1: Open Instagram -->
-      <div id="connectStep1">
-        <button class="btn btn-primary" onclick="openInstagramLogin()" style="font-size:16px;padding:14px 28px">Connect Instagram</button>
-        <p class="help-text" style="margin-top:8px">Opens Instagram in a new tab. Log in there, then come back here.</p>
-      </div>
-
-      <!-- Step 2: Complete Connection (shown after popup opens) -->
-      <div id="connectStep2" style="display:none">
-        <div style="background:#0a0a1a;border:1px solid #1a1a3a;border-radius:10px;padding:16px;margin-bottom:14px">
-          <div style="font-size:14px;font-weight:600;color:#667eea;margin-bottom:6px">Step 2: Complete the Connection</div>
-          <p style="color:#aaa;font-size:13px;line-height:1.6">After logging into Instagram, tap the button below <strong style="color:#fff">while on your Instagram tab</strong>.</p>
-        </div>
-        <p style="margin-bottom:10px">
-          <a id="grabCookieLink" class="btn btn-primary" style="display:inline-block;text-decoration:none;text-align:center;font-size:15px;padding:12px 24px" href="#">&#x1F517; Complete Connection</a>
-        </p>
-        <div style="background:#111;border:1px solid #222;border-radius:8px;padding:12px;margin-top:8px">
-          <p style="color:#aaa;font-size:12px;line-height:1.6;margin-bottom:6px"><strong style="color:#fff">How to use:</strong></p>
-          <p style="color:#888;font-size:12px;line-height:1.6">
-            <strong style="color:#ccc">Desktop:</strong> Drag the button above into your <strong style="color:#fff">bookmarks bar</strong>, switch to the Instagram tab, then click it from your bookmarks.<br>
-            <strong style="color:#ccc">Mobile:</strong> Long-press the button, <strong style="color:#fff">copy the link</strong>, switch to the Instagram tab, paste it in the address bar, and tap Go.
-          </p>
-        </div>
-        <div id="connectError" style="display:none;color:#e74c3c;font-size:13px;padding:8px 12px;background:#1a0a0a;border:1px solid #3a1a1a;border-radius:6px;margin-top:8px"></div>
-        <button class="btn btn-secondary" style="margin-top:10px" onclick="resetConnectForm()">Start Over</button>
-      </div>
+      <button class="btn btn-primary" onclick="openConnectPopup()" style="font-size:16px;padding:14px 28px">Connect Instagram</button>
+      <p class="help-text" style="margin-top:8px">Opens a secure popup to connect your Instagram account.</p>
     </div>
   </div>
 
@@ -313,61 +290,29 @@ async function logout() {
 }
 
 // ===== CONNECT INSTAGRAM =====
-let igPopup = null;
-
-function openInstagramLogin() {
-  igPopup = window.open('https://www.instagram.com/accounts/login/', '_blank', 'width=450,height=600');
-  // Set up the bookmarklet link
-  const callbackUrl = window.location.origin + '/connect-callback';
-  const bookmarkletCode = "javascript:void((function(){var s=document.cookie.match(/sessionid=([^;]+)/);if(s){window.location='" + callbackUrl + "?sessionId='+encodeURIComponent(s[1])}else{alert('Not logged in. Please log into Instagram first.')}})())";
-  document.getElementById('grabCookieLink').href = bookmarkletCode;
-  // Show step 2
-  document.getElementById('connectStep1').style.display = 'none';
-  document.getElementById('connectStep2').style.display = 'block';
-  // Poll for connection via callback (user may have completed it)
-  startConnectionPoll();
+function openConnectPopup() {
+  const w = 420, h = 580;
+  const left = (screen.width - w) / 2;
+  const top = (screen.height - h) / 2;
+  window.open('/connect-popup', 'ig-connect', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
 }
 
-let connectionPollId = null;
-function startConnectionPoll() {
-  if (connectionPollId) return;
-  connectionPollId = setInterval(async () => {
-    const data = await api('/api/instagram/status');
-    if (data.connected) {
-      clearInterval(connectionPollId);
-      connectionPollId = null;
-      refreshStatus();
-    }
-  }, 3000);
-}
+// Listen for postMessage from popup on successful connect
+window.addEventListener('message', function(e) {
+  if (e.origin !== window.location.origin) return;
+  if (e.data && e.data.type === 'ig-connected') {
+    refreshStatus();
+    loadNonFollowers();
+  }
+});
 
-function resetConnectForm() {
-  document.getElementById('connectStep1').style.display = 'block';
-  document.getElementById('connectStep2').style.display = 'none';
-  hideConnectError();
-  if (connectionPollId) { clearInterval(connectionPollId); connectionPollId = null; }
-}
-
-// Handle callback URL params (from bookmarklet redirect)
+// Handle callback URL params (clean up URL if present)
 (function handleCallbackParams() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('connected')) {
-    // Clean URL
-    window.history.replaceState({}, '', '/dashboard');
-  }
-  if (params.get('error')) {
-    setTimeout(() => {
-      const el = document.getElementById('connectError');
-      if (el) { el.textContent = params.get('error'); el.style.display = 'block'; }
-      document.getElementById('connectStep1').style.display = 'none';
-      document.getElementById('connectStep2').style.display = 'block';
-    }, 500);
+  if (params.get('connected') || params.get('error')) {
     window.history.replaceState({}, '', '/dashboard');
   }
 })();
-
-function showConnectError(msg) { const el = document.getElementById('connectError'); el.textContent = msg; el.style.display = 'block'; }
-function hideConnectError() { document.getElementById('connectError').style.display = 'none'; }
 
 // ===== STATUS =====
 let pollInterval;
