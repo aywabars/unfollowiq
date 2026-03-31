@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect Instagram â UnfollowIQ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.container{width:100%;max-width:360px;padding:24px}
+.logo{text-align:center;margin-bottom:24px}
+.logo h1{font-size:22px;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo p{color:#666;font-size:13px;margin-top:4px}
+.card{background:#111;border:1px solid #222;border-radius:14px;padding:24px}
+.card h2{font-size:16px;font-weight:600;margin-bottom:16px;color:#ddd;text-align:center}
+.ig-icon{text-align:center;margin-bottom:16px;font-size:36px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;color:#888;margin-bottom:6px;font-weight:500}
+.form-group input{width:100%;padding:11px 14px;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;transition:border-color .2s}
+.form-group input:focus{outline:none;border-color:#667eea}
+.form-group input::placeholder{color:#555}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;margin-top:6px}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 15px rgba(102,126,234,.4)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.error-msg{background:#1a0a0a;border:1px solid #3a1a1a;color:#e74c3c;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5}
+.success-msg{background:#0a1a0a;border:1px solid #1a3a1a;color:#2ecc71;padding:14px;border-radius:8px;font-size:14px;text-align:center;display:none;line-height:1.5}
+.success-msg strong{font-size:16px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.divider{text-align:center;color:#444;font-size:12px;margin:16px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#222}
+.divider::before{left:0}
+.divider::after{right:0}
+.help{text-align:center;margin-top:16px;font-size:12px;color:#555;line-height:1.6}
+.help a{color:#667eea;text-decoration:none}
+
+/* 2FA section */
+#twoFaSection{display:none}
+#challengeSection{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <h1>UnfollowIQ</h1>
+    <p>Connect your Instagram account</p>
+  </div>
+
+  <div class="card">
+    <div class="ig-icon">&#x1F4F7;</div>
+
+    <!-- Login Form -->
+    <div id="loginSection">
+      <div id="errorMsg" class="error-msg"></div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Instagram Username</label>
+          <input type="text" id="igUsername" placeholder="your_username" autocomplete="username" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>Instagram Password</label>
+          <input type="password" id="igPassword" placeholder="Password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnLogin">Connect Instagram</button>
+      </form>
+      <p class="help">Your credentials are sent directly to Instagram.<br>We never store your password.</p>
+    </div>
+
+    <!-- 2FA Section -->
+    <div id="twoFaSection">
+      <h2>Two-Factor Authentication</h2>
+      <p style="color:#aaa;font-size:13px;text-align:center;margin-bottom:14px">Enter the code from your authenticator app or SMS</p>
+      <div id="twoFaError" class="error-msg"></div>
+      <form onsubmit="handle2FA(event)">
+        <div class="form-group">
+          <label>Security Code</label>
+          <input type="text" id="twoFaCode" placeholder="123456" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn2FA">Verify</button>
+      </form>
+    </div>
+
+    <!-- Challenge Section -->
+    <div id="challengeSection">
+      <h2>Security Verification</h2>
+      <p style="color:#aaa;font-size:13px;text-align:center;margin-bottom:14px" id="challengeMsg">Instagram sent a verification code. Check your email or phone.</p>
+      <div id="challengeError" class="error-msg"></div>
+      <form onsubmit="handleChallenge(event)">
+        <div class="form-group">
+          <label>Verification Code</label>
+          <input type="text" id="challengeCode" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnChallenge">Verify</button>
+      </form>
+    </div>
+
+    <!-- Success Section -->
+    <div id="successSection" class="success-msg">
+      <strong>&#x2705; Connected!</strong><br>
+      Logged in as <strong id="connectedUser">@username</strong><br>
+      <span style="font-size:12px;color:#888;margin-top:6px;display:inline-block">This window will close automatically...</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let twoFaData = {};
+let challengeData = {};
+
+async function api(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.text = btn.textContent;
+    btn.innerHTML = '<span class="spinner"></span> Connecting...';
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.text || 'Connect';
+  }
+}
+
+function showSuccess(username) {
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('twoFaSection').style.display = 'none';
+  document.getElementById('challengeSection').style.display = 'none';
+  document.getElementById('successSection').style.display = 'block';
+  document.getElementById('connectedUser').textContent = '@' + username;
+
+  // Notify the parent window (dashboard)
+  if (window.opener) {
+    window.opener.postMessage({ type: 'ig-connected', username: username }, '*');
+  }
+
+  // Auto-close after 1.5 seconds
+  setTimeout(() => { window.close(); }, 1500);
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  hideError('errorMsg');
+  setLoading('btnLogin', true);
+
+  const username = document.getElementById('igUsername').value.trim();
+  const password = document.getElementById('igPassword').value;
+
+  try {
+    const data = await api('/api/instagram/login', { username, password });
+
+    if (data.success) {
+      showSuccess(data.username || username);
+      return;
+    }
+
+    // 2FA required
+    if (data.twoFactorRequired || data.requires2FA) {
+      twoFaData = {
+        identifier: data.twoFactorIdentifier || data.identifier,
+        username: username,
+        csrfToken: data.csrfToken
+      };
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('twoFaSection').style.display = 'block';
+      document.getElementById('twoFaCode').focus();
+      setLoading('btnLogin', false);
+      return;
+    }
+
+    // Challenge required (email/phone verification)
+    if (data.challengeRequired || data.checkpoint) {
+      challengeData = {
+        checkpointUrl: data.checkpointUrl,
+        csrfToken: data.csrfToken,
+        cookies: data.cookies,
+        username: username
+      };
+      if (data.challengeType) {
+        document.getElementById('challengeMsg').textContent = data.challengeType === 'email'
+          ? 'Instagram sent a code to your email.'
+          : 'Instagram sent a code to your phone.';
+      }
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('challengeSection').style.display = 'block';
+      document.getElementById('challengeCode').focus();
+      setLoading('btnLogin', false);
+      return;
+    }
+
+    // Generic error
+    showError('errorMsg', data.error || data.message || 'Login failed. Please try again.');
+  } catch (err) {
+    showError('errorMsg', 'Connection error. Please try again.');
+  }
+
+  setLoading('btnLogin', false);
+}
+
+async function handle2FA(e) {
+  e.preventDefault();
+  hideError('twoFaError');
+  setLoading('btn2FA', true);
+
+  const code = document.getElementById('twoFaCode').value.trim();
+
+  try {
+    const data = await api('/api/instagram/verify-2fa', {
+      code,
+      identifier: twoFaData.identifier,
+      username: twoFaData.username,
+      csrfToken: twoFaData.csrfToken
+    });
+
+    if (data.success) {
+      showSuccess(data.username || twoFaData.username);
+      return;
+    }
+
+    showError('twoFaError', data.error || data.message || 'Invalid code. Please try again.');
+  } catch (err) {
+    showError('twoFaError', 'Verification failed. Please try again.');
+  }
+
+  setLoading('btn2FA', false);
+}
+
+async function handleChallenge(e) {
+  e.preventDefault();
+  hideError('challengeError');
+  setLoading('btnChallenge', true);
+
+  const code = document.getElementById('challengeCode').value.trim();
+
+  try {
+    const data = await api('/api/instagram/verify-challenge', {
+      code,
+      checkpointUrl: challengeData.checkpointUrl,
+      csrfToken: challengeData.csrfToken,
+      cookies: challengeData.cookies,
+      username: challengeData.username
+    });
+
+    if (data.success) {
+      showSuccess(data.username || challengeData.username);
+      return;
+    }
+
+    showError('challengeError', data.error || data.message || 'Invalid code. Please try again.');
+  } catch (err) {
+    showError('challengeError', 'Verification failed. Please try again.');
+  }
+
+  setLoading('btnChallenge', false);
+}
+</script>
+</body>
+</html>
