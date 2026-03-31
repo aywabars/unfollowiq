@@ -192,7 +192,8 @@ async function handleLogin(e) {
         checkpointUrl: data.checkpointUrl || ci.checkpointUrl,
         csrfToken: data.csrfToken || ci.csrfToken,
         cookies: data.cookies || ci.cookies,
-        username: username
+        username: username,
+        serverRevision: data.serverRevision || null
       };
       console.log('Challenge data:', JSON.stringify(challengeData));
             // Log debug info from backend
