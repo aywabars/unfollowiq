@@ -195,6 +195,16 @@ async function handleLogin(e) {
         username: username
       };
       console.log('Challenge data:', JSON.stringify(challengeData));
+            // Log debug info from backend
+            if (data.debugInfo) {
+              console.log('DEBUG INFO:', JSON.stringify(data.debugInfo));
+              document.getElementById('challengeMsg').textContent += ' [Debug: sendCodeStatus=' + (data.debugInfo.sendCodeStatus || 'N/A') + ', data=' + JSON.stringify(data.debugInfo.sendCodeData || {}).substring(0,200) + ']';
+            }
+            // Log debug info from backend
+            if (data.debugInfo) {
+              console.log('DEBUG INFO:', JSON.stringify(data.debugInfo));
+              document.getElementById('challengeMsg').textContent += ' [Debug: sendCodeStatus=' + (data.debugInfo.sendCodeStatus || 'N/A') + ', data=' + JSON.stringify(data.debugInfo.sendCodeData || {}).substring(0,200) + ']';
+            }
       if (!challengeData.checkpointUrl) {
         showError('errorMsg', 'Instagram requires verification but we could not start the process. Please log into instagram.com directly first, complete any security checks, then try again.');
         setLoading('btnLogin', false);
