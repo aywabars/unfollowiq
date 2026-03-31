@@ -304,6 +304,7 @@ app.get('/connect-callback', auth.requireAuth, async (req, res) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'landing.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
+app.get('/connect-popup', (req, res) => res.sendFile(path.join(__dirname, 'views', 'connect-popup.html')));
 
 // Start server & job queue
 app.listen(PORT, () => {
